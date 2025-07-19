@@ -13,7 +13,10 @@ interface VerseAudioPlayerProps {
   className?: string
 }
 
+
 export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
+  const [audioLoaded, setAudioLoaded] = useState(false)
+  const [audioLoading, setAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -33,6 +36,18 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
   useEffect(() => {
     checkAudioAvailability()
   }, [ayah.surahId, ayah.number])
+
+
+  const handleAudioClick = async () => {
+  try {
+    setAudioLoading(true)
+    await togglePlayPause()
+  } catch (error) {
+    setAudioError(true)
+  } finally {
+    setAudioLoading(false)
+  }
+}
 
   // Stop playing when another verse starts
   useEffect(() => {
@@ -238,39 +253,56 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
 
   const audioUrl = dataService.getVerseAudioUrl(1, ayah.surahId, ayah.number)
 
-  return (
-    <div className={`space-y-2 ${className}`}>
-      <audio ref={audioRef} src={audioUrl} preload="metadata" crossOrigin="anonymous" playsInline />
+ return (
+  <div className={`space-y-2 ${className}`}>
+    <audio
+      ref={audioRef}
+      src={audioUrl}
+      preload="metadata"
+      crossOrigin="anonymous"
+      playsInline
+    />
 
-      {/* Play Button */}
-      <div className="flex items-center space-x-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={togglePlayPause}
-          disabled={isLoading || audioError}
-          className={`h-8 px-3 transition-all duration-200 ${
-            isCurrentlyPlaying
-              ? "bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/40 border-green-300 dark:border-green-700"
-              : "bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 border-green-200 dark:border-green-800"
-          } border`}
-        >
-          <Headphones className="h-3 w-3 mr-2 text-green-600" />
-{isLoading ? (
-  <Loader2 className="h-3 w-3 animate-spin" />
-) : isCurrentlyPlaying && isPlaying ? (
-  <Pause className="h-3 w-3" />
-) : (
-  <Play className="h-3 w-3" />
-)}
-<span className="text-xs ml-1 text-green-700 dark:text-green-300">
-  {isLoading ? "Loading..." : isCurrentlyPlaying && isPlaying ? "Pause" : "Listen"}
-</span>
-</Button>
+    {/* Play Button */}
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleAudioClick}
+        disabled={audioError}
+        className={`h-8 px-3 transition-all duration-200 ${
+          isCurrentlyPlaying
+            ? "bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/40 border-green-300 dark:border-green-700"
+            : "bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 border-green-200 dark:border-green-800"
+        } border`}
+      >
+        <Headphones className="h-3 w-3 mr-2 text-green-600" />
 
-{audioError && <span className="text-xs text-red-500">Audio unavailable</span>}
+        {audioLoading ? (
+          <>
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span className="text-xs ml-1 text-green-700 dark:text-green-300">
+              Loading...
+            </span>
+          </>
+        ) : (
+          <>
+            {isCurrentlyPlaying && isPlaying ? (
+              <Pause className="h-3 w-3" />
+            ) : (
+              <Play className="h-3 w-3" />
+            )}
+            <span className="text-xs ml-1 text-green-700 dark:text-green-300">
+              {isCurrentlyPlaying && isPlaying ? "Pause" : "Listen"}
+            </span>
+          </>
+        )}
+      </Button>
 
-      </div>
+      {audioError && (
+        <span className="text-xs text-red-500">Audio unavailable</span>
+      )}
     </div>
-  )
+  </div>
+)
 }

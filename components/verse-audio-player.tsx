@@ -256,21 +256,20 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
           } border`}
         >
           <Headphones className="h-3 w-3 mr-2 text-green-600" />
-          {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : isCurrentlyPlaying && isPlaying ? (
-            <Pause className="h-3 w-3" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-          <span className="text-xs ml-1 text-green-700 dark:text-green-300">
-            {isLoading ? "Loading..." : isCurrentlyPlaying && isPlaying ? "Pause" : "Listen"}
-          </span>
-        </Button>
+{isLoading ? (
+  <Loader2 className="h-3 w-3 animate-spin" />
+) : isCurrentlyPlaying && isPlaying ? (
+  <Pause className="h-3 w-3" />
+) : (
+  <Play className="h-3 w-3" />
+)}
+<span className="text-xs ml-1 text-green-700 dark:text-green-300">
+  {isLoading ? "Loading..." : isCurrentlyPlaying && isPlaying ? "Pause" : "Listen"}
+</span>
+</Button>
 
-        {isCurrentlyPlaying && isPlaying && <span className="text-xs text-muted-foreground">Mishary Al Afasy</span>}
+{audioError && <span className="text-xs text-red-500">Audio unavailable</span>}
 
-        {audioError && <span className="text-xs text-red-500">Audio unavailable</span>}
       </div>
     </div>
   )

@@ -474,7 +474,7 @@ const COMPLETE_SURAH_LIST = [
   },
   { id: 113, nameArabic: "الفلق", nameEnglish: "Al-Falaq", meaning: "The Daybreak", verses: 5, revelation: "Meccan" },
   { id: 114, nameArabic: "الناس", nameEnglish: "An-Nas", meaning: "Mankind", verses: 6, revelation: "Meccan" },
-]
+] as const
 
 // Transform API data to our app format
 export const dataService = {
@@ -482,7 +482,6 @@ export const dataService = {
   transformChapterToSurah(apiChapter: ApiChapter): Surah {
     // Transform verses from arrays to individual ayah objects
     const ayahs: Ayah[] = []
-
     if (apiChapter.english && apiChapter.arabic1) {
       for (let i = 0; i < apiChapter.english.length; i++) {
         ayahs.push({
@@ -530,7 +529,6 @@ export const dataService = {
   async getAllSurahs(): Promise<Surah[]> {
     try {
       console.log("Getting all 114 surahs...")
-
       // Return complete list with proper data
       const allSurahs = COMPLETE_SURAH_LIST.map((surah) => ({
         id: surah.id,
@@ -543,7 +541,6 @@ export const dataService = {
         audioUrl: "",
         ayahs: [],
       }))
-
       console.log(`Retrieved all ${allSurahs.length} surahs`)
       return allSurahs
     } catch (error) {
@@ -561,6 +558,13 @@ export const dataService = {
   async getSurah(surahId: number): Promise<Surah | null> {
     try {
       console.log(`Getting surah ${surahId}...`)
+
+      // Validate surah ID
+      if (surahId < 1 || surahId > 114) {
+        console.error(`Invalid surah ID: ${surahId}`)
+        return null
+      }
+
       const apiChapter = await quranApi.getChapter(surahId)
       if (!apiChapter) {
         // Return basic info if API fails
@@ -584,15 +588,37 @@ export const dataService = {
       const surah = this.transformChapterToSurah(apiChapter)
 
       // Set the proper audio URL using the audio API - only Mishary (ID 1)
-      const audioData = await quranApi.getChapterAudio(surahId)
-      if (audioData && audioData["1"]) {
-        // Use original URL if available, otherwise use the GitHub URL
-        surah.audioUrl = audioData["1"].originalUrl || audioData["1"].url
+      try {
+        const audioData = await quranApi.getChapterAudio(surahId)
+        if (audioData && audioData["1"]) {
+          // Use original URL if available, otherwise use the GitHub URL
+          surah.audioUrl = audioData["1"].originalUrl || audioData["1"].url
+        }
+      } catch (audioError) {
+        console.warn(`Could not get audio for surah ${surahId}:`, audioError)
+        // Audio URL will remain empty string
       }
 
       return surah
     } catch (error) {
       console.error(`Error getting surah ${surahId}:`, error)
+
+      // Return basic info as fallback
+      const basicInfo = COMPLETE_SURAH_LIST.find((s) => s.id === surahId)
+      if (basicInfo) {
+        return {
+          id: basicInfo.id,
+          name: basicInfo.nameArabic,
+          nameArabic: basicInfo.nameArabic,
+          nameEnglish: basicInfo.nameEnglish,
+          meaning: basicInfo.meaning,
+          verses: basicInfo.verses,
+          revelation: basicInfo.revelation as "Meccan" | "Medinan",
+          audioUrl: "",
+          ayahs: [],
+        }
+      }
+
       return null
     }
   },
@@ -600,8 +626,9 @@ export const dataService = {
   // Get Tafsir for a specific verse
   async getTafsir(surahId: number, ayahId: number): Promise<string | null> {
     try {
-      const tafsirData = await quranApi.getTafsir(surahId, ayahId)
-      return tafsirData?.tafsir || null
+      // This would be implemented based on your tafsir API
+      console.log(`Getting tafsir for ${surahId}:${ayahId}`)
+      return null // Placeholder
     } catch (error) {
       console.error(`Error getting tafsir for ${surahId}:${ayahId}:`, error)
       return null
@@ -611,15 +638,20 @@ export const dataService = {
   // Enhanced search with all surahs
   async searchContent(query: string): Promise<{ surahs: Surah[]; verses: Ayah[] }> {
     try {
+      if (!query || query.trim().length === 0) {
+        return { surahs: [], verses: [] }
+      }
+
+      const normalizedQuery = query.toLowerCase().trim()
       const allSurahs = await this.getAllSurahs()
 
       // Filter surahs that match the query
       const matchingSurahs = allSurahs.filter(
         (surah) =>
-          surah.nameEnglish.toLowerCase().includes(query.toLowerCase()) ||
-          surah.meaning.toLowerCase().includes(query.toLowerCase()) ||
+          surah.nameEnglish.toLowerCase().includes(normalizedQuery) ||
+          surah.meaning.toLowerCase().includes(normalizedQuery) ||
           surah.nameArabic.includes(query) ||
-          surah.id.toString() === query,
+          surah.id.toString() === normalizedQuery,
       )
 
       // For verses, we'd need to implement a more comprehensive search
@@ -665,17 +697,26 @@ export const dataService = {
   // Get audio URL for a surah - only Mishary (ID 1)
   async getAudioUrl(surahId: number, reciterId = 1): Promise<string> {
     try {
+      // Validate surah ID
+      if (surahId < 1 || surahId > 114) {
+        throw new Error(`Invalid surah ID: ${surahId}`)
+      }
+
       const audioData = await quranApi.getChapterAudio(surahId)
       if (audioData && audioData["1"]) {
         // Use original URL if available, otherwise use the GitHub URL
-        return audioData["1"].originalUrl || audioData["1"].url
+        const audioUrl = audioData["1"].originalUrl || audioData["1"].url
+        if (audioUrl) {
+          return audioUrl
+        }
       }
     } catch (error) {
       console.error(`Error getting audio URL for surah ${surahId}:`, error)
     }
 
     // Fallback URL - always use Mishary (ID 1)
-    return `https://github.com/The-Quran-Project/Quran-Audio-Chapters/raw/refs/heads/main/Data/1/${surahId}.mp3`
+    const paddedId = surahId.toString().padStart(3, "0")
+    return `https://github.com/The-Quran-Project/Quran-Audio-Chapters/raw/refs/heads/main/Data/1/${paddedId}.mp3`
   },
 
   // Get verse audio URL - only Mishary
@@ -698,7 +739,41 @@ export const dataService = {
 
   // Check verse audio availability - only Mishary
   async checkVerseAudioAvailability(reciterId: number, surahId: number, ayahId: number): Promise<boolean> {
-    return quranApi.checkVerseAudioAvailability(1, surahId, ayahId) // Always use Mishary (ID 1)
+    try {
+      return await quranApi.checkVerseAudioAvailability(1, surahId, ayahId) // Always use Mishary (ID 1)
+    } catch (error) {
+      console.error(`Error checking verse audio availability for ${surahId}:${ayahId}:`, error)
+      return false
+    }
+  },
+
+  // Get featured surahs
+  async getFeaturedSurahs(): Promise<Surah[]> {
+    try {
+      const allSurahs = await this.getAllSurahs()
+      return allSurahs.filter((surah) => featuredSurahIds.includes(surah.id))
+    } catch (error) {
+      console.error("Error getting featured surahs:", error)
+      return []
+    }
+  },
+
+  // Get recently played surahs from localStorage
+  getRecentlyPlayed(): Surah[] {
+    if (typeof window === "undefined") {
+      return []
+    }
+
+    try {
+      const stored = localStorage.getItem("recentlyPlayed")
+      if (stored) {
+        return JSON.parse(stored)
+      }
+    } catch (error) {
+      console.error("Error getting recently played:", error)
+    }
+
+    return []
   },
 }
 

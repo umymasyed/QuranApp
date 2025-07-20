@@ -7,12 +7,12 @@ import { Slider } from "@/components/ui/slider"
 import { useAudio } from "./audio-provider"
 
 export function AudioPlayer() {
-  const { state, togglePlayPause, seekTo } = useAudio()
+  const { state, dispatch, audioRef, togglePlayPause, seekTo } = useAudio()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [previousVolume, setPreviousVolume] = useState(1)
 
-  const formatTime = (time: number) => {
+  const formatTime = (time: number): string => {
     if (!time || isNaN(time)) return "0:00"
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
@@ -20,15 +20,17 @@ export function AudioPlayer() {
   }
 
   const handleSeek = (value: number[]) => {
-    seekTo(value[0])
+    if (value[0] !== undefined) {
+      seekTo(value[0])
+    }
   }
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0] / 100
-    if (state.audioRef?.current) {
-      state.audioRef.current.volume = newVolume
+    if (audioRef?.current) {
+      audioRef.current.volume = newVolume
     }
-    state.dispatch({ type: "SET_VOLUME", payload: newVolume })
+    dispatch({ type: "SET_VOLUME", payload: newVolume })
     if (newVolume > 0 && isMuted) {
       setIsMuted(false)
     }
@@ -37,17 +39,17 @@ export function AudioPlayer() {
   const toggleMute = () => {
     if (isMuted) {
       const newVolume = previousVolume
-      if (state.audioRef?.current) {
-        state.audioRef.current.volume = newVolume
+      if (audioRef?.current) {
+        audioRef.current.volume = newVolume
       }
-      state.dispatch({ type: "SET_VOLUME", payload: newVolume })
+      dispatch({ type: "SET_VOLUME", payload: newVolume })
       setIsMuted(false)
     } else {
       setPreviousVolume(state.volume)
-      if (state.audioRef?.current) {
-        state.audioRef.current.volume = 0
+      if (audioRef?.current) {
+        audioRef.current.volume = 0
       }
-      state.dispatch({ type: "SET_VOLUME", payload: 0 })
+      dispatch({ type: "SET_VOLUME", payload: 0 })
       setIsMuted(true)
     }
   }
@@ -95,11 +97,10 @@ export function AudioPlayer() {
                 <SkipForward className="h-4 w-4" />
               </Button>
             </div>
-
             <div className="flex items-center space-x-2 w-full">
               <span className="text-xs text-muted-foreground w-10 text-right">{formatTime(state.currentTime)}</span>
               <Slider
-                value={[state.currentTime]}
+                value={[state.currentTime || 0]}
                 max={state.duration || 100}
                 step={1}
                 onValueChange={handleSeek}
@@ -115,7 +116,7 @@ export function AudioPlayer() {
               {isMuted || state.volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
             <Slider
-              value={[state.volume * 100]}
+              value={[(state.volume || 0) * 100]}
               max={100}
               step={1}
               onValueChange={handleVolumeChange}
@@ -176,7 +177,7 @@ export function AudioPlayer() {
 
             <div className="space-y-2">
               <Slider
-                value={[state.currentTime]}
+                value={[state.currentTime || 0]}
                 max={state.duration || 100}
                 step={1}
                 onValueChange={handleSeek}
@@ -217,7 +218,7 @@ export function AudioPlayer() {
                 {isMuted || state.volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </Button>
               <Slider
-                value={[state.volume * 100]}
+                value={[(state.volume || 0) * 100]}
                 max={100}
                 step={1}
                 onValueChange={handleVolumeChange}

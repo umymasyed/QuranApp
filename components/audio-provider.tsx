@@ -60,15 +60,17 @@ function audioReducer(state: AudioState, action: AudioAction): AudioState {
   }
 }
 
-const AudioContext = createContext<{
+interface AudioContextType {
   state: AudioState
   dispatch: React.Dispatch<AudioAction>
   audioRef: React.RefObject<HTMLAudioElement>
-  playSurah: (surah: Surah) => void
-  togglePlayPause: () => void
+  playSurah: (surah: Surah) => Promise<void>
+  togglePlayPause: () => Promise<void>
   seekTo: (time: number) => void
-  changeReciter: (reciterId: number) => void
-} | null>(null)
+  changeReciter: (reciterId: number) => Promise<void>
+}
+
+const AudioContext = createContext<AudioContextType | null>(null)
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(audioReducer, initialState)
@@ -77,18 +79,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize with user's preferred reciter
   useEffect(() => {
-    const preferences = storage.getPreferences()
-    dispatch({ type: "SET_RECITER", payload: preferences.selectedReciter || 1 })
-    dispatch({ type: "SET_VOLUME", payload: 0.7 })
+    try {
+      const preferences = storage.getPreferences()
+      dispatch({ type: "SET_RECITER", payload: preferences.selectedReciter || 1 })
+      dispatch({ type: "SET_VOLUME", payload: 0.7 })
+    } catch (error) {
+      console.error("Error loading preferences:", error)
+      // Use defaults if storage fails
+      dispatch({ type: "SET_RECITER", payload: 1 })
+      dispatch({ type: "SET_VOLUME", payload: 0.7 })
+    }
   }, [])
 
   // Setup Media Session API for notification/lock screen controls
   const setupMediaSession = (surah: Surah) => {
-    if ("mediaSession" in navigator) {
+    if (typeof window === "undefined" || !("mediaSession" in navigator)) {
+      return
+    }
+
+    try {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: surah.nameEnglish,
         artist: "Mishary Rashid Al Afasy",
-        album: `${surah.nameArabic} - ${surah.meaning}`,
+        album: `${surah.nameArabic} - ${surah.meaning || ""}`,
         artwork: [
           {
             src: "/icon-192x192.png",
@@ -103,52 +116,88 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         ],
       })
 
-      // Set up action handlers
-      navigator.mediaSession.setActionHandler("play", () => {
-        togglePlayPause()
+      // Set up action handlers with proper async handling
+      navigator.mediaSession.setActionHandler("play", async () => {
+        console.log("Media session play clicked")
+        try {
+          if (audioRef.current && audioRef.current.paused) {
+            await togglePlayPause()
+          }
+        } catch (error) {
+          console.error("Error handling media session play:", error)
+        }
       })
 
-      navigator.mediaSession.setActionHandler("pause", () => {
-        togglePlayPause()
+      navigator.mediaSession.setActionHandler("pause", async () => {
+        console.log("Media session pause clicked")
+        try {
+          if (audioRef.current && !audioRef.current.paused) {
+            await togglePlayPause()
+          }
+        } catch (error) {
+          console.error("Error handling media session pause:", error)
+        }
       })
 
       navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+        console.log("Media session seek backward")
         const skipTime = details.seekOffset || 10
         if (audioRef.current) {
-          audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - skipTime)
+          const newTime = Math.max(0, audioRef.current.currentTime - skipTime)
+          seekTo(newTime)
         }
       })
 
       navigator.mediaSession.setActionHandler("seekforward", (details) => {
+        console.log("Media session seek forward")
         const skipTime = details.seekOffset || 10
-        if (audioRef.current) {
-          audioRef.current.currentTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + skipTime)
+        if (audioRef.current && audioRef.current.duration) {
+          const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + skipTime)
+          seekTo(newTime)
         }
       })
 
       navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime && audioRef.current) {
-          audioRef.current.currentTime = details.seekTime
+        console.log("Media session seek to:", details.seekTime)
+        if (details.seekTime !== undefined && audioRef.current) {
+          seekTo(details.seekTime)
         }
       })
+
+      // Set initial playback state
+      navigator.mediaSession.playbackState = state.isPlaying ? "playing" : "paused"
+
+      console.log("Media session setup complete")
+    } catch (error) {
+      console.error("Error setting up media session:", error)
     }
   }
 
   // Update media session position
   const updateMediaSessionPosition = () => {
-    if ("mediaSession" in navigator && audioRef.current) {
-      navigator.mediaSession.setPositionState({
-        duration: audioRef.current.duration || 0,
-        playbackRate: audioRef.current.playbackRate,
-        position: audioRef.current.currentTime || 0,
-      })
+    if (typeof window === "undefined" || !("mediaSession" in navigator) || !audioRef.current) {
+      return
+    }
+
+    try {
+      const duration = audioRef.current.duration
+      const currentTime = audioRef.current.currentTime
+
+      if (isFinite(duration) && isFinite(currentTime)) {
+        navigator.mediaSession.setPositionState({
+          duration,
+          playbackRate: audioRef.current.playbackRate,
+          position: currentTime,
+        })
+      }
+    } catch (error) {
+      console.error("Error updating media session position:", error)
     }
   }
 
-  const playSurah = async (surah: Surah) => {
+  const playSurah = async (surah: Surah): Promise<void> => {
     try {
       console.log(`Starting to play surah: ${surah.nameEnglish} (ID: ${surah.id})`)
-
       dispatch({ type: "SET_CURRENT_SURAH", payload: surah })
       dispatch({ type: "SET_LOADING", payload: true })
       dispatch({ type: "SET_PLAYING", payload: false })
@@ -160,42 +209,51 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       const audioUrl = await dataService.getAudioUrl(surah.id, 1)
       console.log(`Audio URL: ${audioUrl}`)
 
-      if (audioRef.current) {
-        // Cancel any pending play promise
-        if (playPromiseRef.current) {
-          await playPromiseRef.current.catch(() => {})
-          playPromiseRef.current = null
-        }
-
-        // Stop current audio
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
-
-        // Explicitly clear the source to prevent "media removed" error
-        audioRef.current.src = "" // ADD THIS LINE
-        audioRef.current.load() // ADD THIS LINE to ensure the audio element is reset
-
-        // Set new source
-        audioRef.current.src = audioUrl
-
-        // Load and play
-        audioRef.current.load()
-
-        // Wait for audio to be ready then play
-        playPromiseRef.current = audioRef.current.play()
-        await playPromiseRef.current
-        playPromiseRef.current = null
-
-        console.log("Audio started playing successfully")
-        dispatch({ type: "SET_LOADING", payload: false })
-        updateMediaSessionPosition()
+      if (!audioRef.current) {
+        throw new Error("Audio element not available")
       }
+
+      // Cancel any pending play promise
+      if (playPromiseRef.current) {
+        try {
+          await playPromiseRef.current
+        } catch (error) {
+          // Ignore interruption errors
+          console.log("Previous play promise cancelled")
+        }
+        playPromiseRef.current = null
+      }
+
+      // Stop current audio
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+
+      // Reset the audio element
+      audioRef.current.src = ""
+      audioRef.current.load()
+
+      // Set new source
+      audioRef.current.src = audioUrl
+      audioRef.current.load()
+
+      // Wait for audio to be ready then play
+      playPromiseRef.current = audioRef.current.play()
+      await playPromiseRef.current
+      playPromiseRef.current = null
+
+      console.log("Audio started playing successfully")
+      dispatch({ type: "SET_LOADING", payload: false })
+      updateMediaSessionPosition()
 
       // Save to recently played
       if (typeof window !== "undefined") {
-        const recentlyPlayed = JSON.parse(localStorage.getItem("recentlyPlayed") || "[]")
-        const filtered = recentlyPlayed.filter((s: Surah) => s.id !== surah.id)
-        localStorage.setItem("recentlyPlayed", JSON.stringify([surah, ...filtered].slice(0, 10)))
+        try {
+          const recentlyPlayed = JSON.parse(localStorage.getItem("recentlyPlayed") || "[]")
+          const filtered = recentlyPlayed.filter((s: Surah) => s.id !== surah.id)
+          localStorage.setItem("recentlyPlayed", JSON.stringify([surah, ...filtered].slice(0, 10)))
+        } catch (error) {
+          console.error("Error saving to recently played:", error)
+        }
       }
     } catch (error: any) {
       console.error("Error in playSurah:", error)
@@ -203,50 +261,65 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_PLAYING", payload: false })
 
       // Only log error if it's not an interruption
-      if (!error.message?.includes("interrupted")) {
+      if (!error.message?.includes("interrupted") && !error.name?.includes("AbortError")) {
         console.error("Actual playback error:", error)
       }
     }
   }
 
-  const changeReciter = async (reciterId: number) => {
+  const changeReciter = async (reciterId: number): Promise<void> => {
     // Since we only have Mishary, this function doesn't need to do much
     console.log("Only Mishary Rashid Al Afasy is available")
-    return
+    dispatch({ type: "SET_RECITER", payload: reciterId })
   }
 
-  const togglePlayPause = async () => {
-    if (audioRef.current) {
-      try {
-        if (state.isPlaying) {
-          // Cancel any pending play promise
-          if (playPromiseRef.current) {
-            await playPromiseRef.current.catch(() => {})
-            playPromiseRef.current = null
+  const togglePlayPause = async (): Promise<void> => {
+    if (!audioRef.current) {
+      console.error("Audio element not available")
+      return
+    }
+
+    try {
+      if (state.isPlaying) {
+        // Cancel any pending play promise
+        if (playPromiseRef.current) {
+          try {
+            await playPromiseRef.current
+          } catch (error) {
+            // Ignore interruption errors
+            console.log("Play promise cancelled for pause")
           }
-          audioRef.current.pause()
-        } else {
-          playPromiseRef.current = audioRef.current.play()
-          await playPromiseRef.current
           playPromiseRef.current = null
         }
-      } catch (error: any) {
-        console.error("Error in togglePlayPause:", error)
-        dispatch({ type: "SET_LOADING", payload: false })
+        audioRef.current.pause()
+      } else {
+        playPromiseRef.current = audioRef.current.play()
+        await playPromiseRef.current
+        playPromiseRef.current = null
+      }
+    } catch (error: any) {
+      console.error("Error in togglePlayPause:", error)
+      dispatch({ type: "SET_LOADING", payload: false })
 
-        // Only set playing to false if it's not an interruption
-        if (!error.message?.includes("interrupted")) {
-          dispatch({ type: "SET_PLAYING", payload: false })
-        }
+      // Only set playing to false if it's not an interruption
+      if (!error.message?.includes("interrupted") && !error.name?.includes("AbortError")) {
+        dispatch({ type: "SET_PLAYING", payload: false })
       }
     }
   }
 
   const seekTo = (time: number) => {
-    if (audioRef.current) {
+    if (!audioRef.current) {
+      console.error("Audio element not available")
+      return
+    }
+
+    try {
       audioRef.current.currentTime = time
       dispatch({ type: "SET_TIME", payload: time })
       updateMediaSessionPosition()
+    } catch (error) {
+      console.error("Error seeking:", error)
     }
   }
 
@@ -256,14 +329,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const handleLoadedMetadata = () => {
       console.log(`Audio loaded, duration: ${audio.duration}`)
-      dispatch({ type: "SET_DURATION", payload: audio.duration })
+      if (isFinite(audio.duration)) {
+        dispatch({ type: "SET_DURATION", payload: audio.duration })
+      }
       dispatch({ type: "SET_LOADING", payload: false })
       updateMediaSessionPosition()
     }
 
     const handleTimeUpdate = () => {
-      dispatch({ type: "SET_TIME", payload: audio.currentTime })
-      updateMediaSessionPosition()
+      if (isFinite(audio.currentTime)) {
+        dispatch({ type: "SET_TIME", payload: audio.currentTime })
+        updateMediaSessionPosition()
+      }
     }
 
     const handlePlay = () => {
@@ -272,8 +349,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_LOADING", payload: false })
 
       // Update media session playback state
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing"
+      if (typeof window !== "undefined" && "mediaSession" in navigator) {
+        try {
+          navigator.mediaSession.playbackState = "playing"
+          console.log("Media session state set to playing")
+        } catch (error) {
+          console.error("Error setting media session to playing:", error)
+        }
       }
     }
 
@@ -282,13 +364,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_PLAYING", payload: false })
 
       // Update media session playback state
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "paused"
+      if (typeof window !== "undefined" && "mediaSession" in navigator) {
+        try {
+          navigator.mediaSession.playbackState = "paused"
+          console.log("Media session state set to paused")
+        } catch (error) {
+          console.error("Error setting media session to paused:", error)
+        }
       }
     }
 
-    const handleError = (e: any) => {
-      console.error("Audio error:", e)
+    const handleError = (e: Event) => {
+      const target = e.target as HTMLAudioElement
+      console.error("Audio error:", target.error)
       dispatch({ type: "SET_LOADING", payload: false })
       dispatch({ type: "SET_PLAYING", payload: false })
     }
@@ -308,11 +396,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: "SET_PLAYING", payload: false })
       dispatch({ type: "SET_TIME", payload: 0 })
 
-      if ("mediaSession" in navigator) {
+      if (typeof window !== "undefined" && "mediaSession" in navigator) {
         navigator.mediaSession.playbackState = "paused"
       }
     }
 
+    const handleWaiting = () => {
+      console.log("Audio waiting")
+      dispatch({ type: "SET_LOADING", payload: true })
+    }
+
+    const handleCanPlayThrough = () => {
+      console.log("Audio can play through")
+      dispatch({ type: "SET_LOADING", payload: false })
+    }
+
+    // Add event listeners
     audio.addEventListener("loadedmetadata", handleLoadedMetadata)
     audio.addEventListener("timeupdate", handleTimeUpdate)
     audio.addEventListener("play", handlePlay)
@@ -321,9 +420,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener("loadstart", handleLoadStart)
     audio.addEventListener("canplay", handleCanPlay)
     audio.addEventListener("ended", handleEnded)
+    audio.addEventListener("waiting", handleWaiting)
+    audio.addEventListener("canplaythrough", handleCanPlayThrough)
 
     // Set volume
-    audio.volume = state.volume
+    audio.volume = Math.max(0, Math.min(1, state.volume))
 
     return () => {
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata)
@@ -334,11 +435,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("loadstart", handleLoadStart)
       audio.removeEventListener("canplay", handleCanPlay)
       audio.removeEventListener("ended", handleEnded)
+      audio.removeEventListener("waiting", handleWaiting)
+      audio.removeEventListener("canplaythrough", handleCanPlayThrough)
     }
   }, [state.volume])
 
+  const contextValue: AudioContextType = {
+    state,
+    dispatch,
+    audioRef,
+    playSurah,
+    togglePlayPause,
+    seekTo,
+    changeReciter,
+  }
+
   return (
-    <AudioContext.Provider value={{ state, dispatch, audioRef, playSurah, togglePlayPause, seekTo, changeReciter }}>
+    <AudioContext.Provider value={contextValue}>
       {children}
       <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" style={{ display: "none" }} playsInline />
     </AudioContext.Provider>

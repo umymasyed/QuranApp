@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/favroite.png", sizes: "192x192", type: "image/png" }],
   },
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -34,6 +34,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Quran App" />
+
+        {/* ✅ Added manifest & icon links below */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favroite.png" />
+        <link rel="apple-touch-icon" href="/favroite.png" sizes="192x192" />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

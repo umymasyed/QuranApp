@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider"
 import { useAudio } from "./audio-provider"
 
 export function AudioPlayer() {
-  const { state, dispatch, audioRef, togglePlayPause, seekTo } = useAudio()
+  const { state, dispatch, audioRef, togglePlayPause, seekTo, playNextSurah, playPreviousSurah } = useAudio()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [previousVolume, setPreviousVolume] = useState(1)
@@ -75,7 +75,7 @@ export function AudioPlayer() {
 
           <div className="flex flex-col items-center space-y-2 flex-1 max-w-md mx-8">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" disabled>
+              <Button variant="ghost" size="icon" onClick={playPreviousSurah}>
                 <SkipBack className="h-4 w-4" />
               </Button>
               <Button
@@ -93,7 +93,7 @@ export function AudioPlayer() {
                   <Play className="h-5 w-5" />
                 )}
               </Button>
-              <Button variant="ghost" size="icon" disabled>
+              <Button variant="ghost" size="icon" onClick={playNextSurah}>
                 <SkipForward className="h-4 w-4" />
               </Button>
             </div>
@@ -190,7 +190,7 @@ export function AudioPlayer() {
             </div>
 
             <div className="flex items-center justify-center space-x-6">
-              <Button variant="ghost" size="icon" disabled>
+              <Button variant="ghost" size="icon" onClick={playPreviousSurah}>
                 <SkipBack className="h-5 w-5" />
               </Button>
               <Button
@@ -208,7 +208,7 @@ export function AudioPlayer() {
                   <Play className="h-6 w-6" />
                 )}
               </Button>
-              <Button variant="ghost" size="icon" disabled>
+              <Button variant="ghost" size="icon" onClick={playNextSurah}>
                 <SkipForward className="h-5 w-5" />
               </Button>
             </div>

@@ -116,26 +116,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         ],
       })
 
-      // Set up action handlers with proper async handling
-      navigator.mediaSession.setActionHandler("play", async () => {
-        console.log("Media session play clicked")
-        try {
-          if (audioRef.current && audioRef.current.paused) {
-            await togglePlayPause()
-          }
-        } catch (error) {
-          console.error("Error handling media session play:", error)
+      // Direct audio control for media session
+      navigator.mediaSession.setActionHandler("play", () => {
+        console.log("Media session PLAY clicked")
+        if (audioRef.current && audioRef.current.paused) {
+          audioRef.current.play().catch(console.error)
         }
       })
 
-      navigator.mediaSession.setActionHandler("pause", async () => {
-        console.log("Media session pause clicked")
-        try {
-          if (audioRef.current && !audioRef.current.paused) {
-            await togglePlayPause()
-          }
-        } catch (error) {
-          console.error("Error handling media session pause:", error)
+      navigator.mediaSession.setActionHandler("pause", () => {
+        console.log("Media session PAUSE clicked")
+        if (audioRef.current && !audioRef.current.paused) {
+          audioRef.current.pause()
         }
       })
 
@@ -144,7 +136,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         const skipTime = details.seekOffset || 10
         if (audioRef.current) {
           const newTime = Math.max(0, audioRef.current.currentTime - skipTime)
-          seekTo(newTime)
+          audioRef.current.currentTime = newTime
         }
       })
 
@@ -153,20 +145,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         const skipTime = details.seekOffset || 10
         if (audioRef.current && audioRef.current.duration) {
           const newTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + skipTime)
-          seekTo(newTime)
+          audioRef.current.currentTime = newTime
         }
       })
 
       navigator.mediaSession.setActionHandler("seekto", (details) => {
         console.log("Media session seek to:", details.seekTime)
         if (details.seekTime !== undefined && audioRef.current) {
-          seekTo(details.seekTime)
+          audioRef.current.currentTime = details.seekTime
         }
       })
 
       // Set initial playback state
-      navigator.mediaSession.playbackState = state.isPlaying ? "playing" : "paused"
-
+      navigator.mediaSession.playbackState = "paused"
       console.log("Media session setup complete")
     } catch (error) {
       console.error("Error setting up media session:", error)
@@ -280,22 +271,33 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      if (state.isPlaying) {
+      console.log("togglePlayPause called, current state:", {
+        isPlaying: state.isPlaying,
+        audioPaused: audioRef.current.paused,
+        audioCurrentTime: audioRef.current.currentTime,
+      })
+
+      if (audioRef.current.paused) {
+        // Audio is paused, so play it
+        console.log("Starting playback...")
+        playPromiseRef.current = audioRef.current.play()
+        await playPromiseRef.current
+        playPromiseRef.current = null
+        console.log("Playback started successfully")
+      } else {
+        // Audio is playing, so pause it
+        console.log("Pausing playback...")
         // Cancel any pending play promise
         if (playPromiseRef.current) {
           try {
             await playPromiseRef.current
           } catch (error) {
-            // Ignore interruption errors
             console.log("Play promise cancelled for pause")
           }
           playPromiseRef.current = null
         }
         audioRef.current.pause()
-      } else {
-        playPromiseRef.current = audioRef.current.play()
-        await playPromiseRef.current
-        playPromiseRef.current = null
+        console.log("Playback paused successfully")
       }
     } catch (error: any) {
       console.error("Error in togglePlayPause:", error)

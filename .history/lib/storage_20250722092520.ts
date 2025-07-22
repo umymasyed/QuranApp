@@ -87,12 +87,10 @@ export const storage = {
         showTranslation: true,
         showTafsir: false,
         autoPlay: false,
-        surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
         translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
-        defaultVolume: 70,
       }
     return JSON.parse(
       localStorage.getItem("preferences") ||
@@ -102,12 +100,10 @@ export const storage = {
           showTranslation: true,
           showTafsir: false,
           autoPlay: false,
-          surahPageVerseAutoPlay: false,
           selectedReciter: 1,
           selectedVerseReciter: 1,
           translationLanguage: "english_saheeh",
           verseAudioEnabled: true,
-          defaultVolume: 70,
         }),
     )
   },

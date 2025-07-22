@@ -31,12 +31,10 @@ export default function SurahDetailPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
   })
   const [showSettings, setShowSettings] = useState(false)
   const { state, playSurah, togglePlayPause } = useAudio()
@@ -241,17 +239,13 @@ export default function SurahDetailPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="surah-verse-autoplay"
-                    checked={preferences.surahPageVerseAutoPlay}
-                    onCheckedChange={(checked) => updatePreferences("surahPageVerseAutoPlay", checked)}
+                    id="autoplay"
+                    checked={preferences.autoPlay}
+                    onCheckedChange={(checked) => updatePreferences("autoPlay", checked)}
                   />
-                  <Label htmlFor="surah-verse-autoplay">Verse Auto Play</Label>
+                  <Label htmlFor="autoplay">Auto Play</Label>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
-                and this setting to be enabled)
-              </p>
             </CardContent>
           </Card>
         )}

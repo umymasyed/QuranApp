@@ -180,7 +180,8 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <Label>Auto Play</Label>
               <p className="text-sm text-muted-foreground">
-                Automatically play next surah when current one ends, and next verse when verse audio ends
+                Enable autoplay for surah-to-surah playback. Also required for verse-to-verse autoplay (along with surah
+                page setting).
               </p>
             </div>
             <Switch

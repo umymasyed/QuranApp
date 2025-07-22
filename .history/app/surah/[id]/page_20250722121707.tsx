@@ -31,13 +31,13 @@ export default function SurahDetailPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
+    defaultVolume: 0.7,
   })
+  const [localVerseAutoPlay, setLocalVerseAutoPlay] = useState(false) // Local verse autoplay toggle
   const [showSettings, setShowSettings] = useState(false)
   const { state, playSurah, togglePlayPause } = useAudio()
   const [isLoading, setIsLoading] = useState(false)
@@ -81,7 +81,12 @@ export default function SurahDetailPage() {
     setFavoriteVerses(userFavoriteVerses)
 
     setIsFavorite(storage.isFavorite(surahId))
-    setPreferences(storage.getPreferences())
+    const loadedPreferences = storage.getPreferences()
+    setPreferences(loadedPreferences)
+
+    // Load local verse autoplay setting (separate from global autoplay)
+    const localAutoPlaySetting = localStorage.getItem(`surah_${surahId}_verse_autoplay`)
+    setLocalVerseAutoPlay(localAutoPlaySetting === "true")
   }, [surahId])
 
   const toggleBookmark = (ayahId: number) => {
@@ -138,6 +143,11 @@ export default function SurahDetailPage() {
     const newPreferences = { ...preferences, [key]: value }
     setPreferences(newPreferences)
     storage.setPreferences(newPreferences)
+  }
+
+  const toggleLocalVerseAutoPlay = (checked: boolean) => {
+    setLocalVerseAutoPlay(checked)
+    localStorage.setItem(`surah_${surahId}_verse_autoplay`, checked.toString())
   }
 
   const getFontSizeClass = () => {
@@ -217,7 +227,7 @@ export default function SurahDetailPage() {
                 <Type className="h-4 w-4 mr-2" />
                 Reading Settings
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>Font Size</Label>
                   <Select value={preferences.fontSize} onValueChange={(value) => updatePreferences("fontSize", value)}>
@@ -241,17 +251,25 @@ export default function SurahDetailPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="surah-verse-autoplay"
-                    checked={preferences.surahPageVerseAutoPlay}
-                    onCheckedChange={(checked) => updatePreferences("surahPageVerseAutoPlay", checked)}
+                    id="globalAutoplay"
+                    checked={preferences.autoPlay}
+                    onCheckedChange={(checked) => updatePreferences("autoPlay", checked)}
                   />
-                  <Label htmlFor="surah-verse-autoplay">Verse Auto Play</Label>
+                  <Label htmlFor="globalAutoplay">Global Auto Play</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch id="verseAutoplay" checked={localVerseAutoPlay} onCheckedChange={toggleLocalVerseAutoPlay} />
+                  <Label htmlFor="verseAutoplay">Verse Auto Play</Label>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
-                and this setting to be enabled)
-              </p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>
+                  <strong>Global Auto Play:</strong> Controls both surah-to-surah and verse-to-verse autoplay everywhere
+                </p>
+                <p>
+                  <strong>Verse Auto Play:</strong> Controls verse-to-verse autoplay only on this surah page
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -324,7 +342,11 @@ export default function SurahDetailPage() {
                       <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium">{ayah.number}</span>
                       </div>
-                      <EnhancedVerseAudioPlayer ayah={ayah} totalVerses={surah.verses} />
+                      <EnhancedVerseAudioPlayer
+                        ayah={ayah}
+                        totalVerses={surah.verses}
+                        localVerseAutoPlay={localVerseAutoPlay}
+                      />
                     </div>
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button

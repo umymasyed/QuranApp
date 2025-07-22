@@ -138,6 +138,13 @@ export default function SurahDetailPage() {
     const newPreferences = { ...preferences, [key]: value }
     setPreferences(newPreferences)
     storage.setPreferences(newPreferences)
+
+    console.log(`Updated preference ${key} to ${value}`)
+
+    // Force a small re-render to ensure components pick up the change
+    setTimeout(() => {
+      setPreferences(storage.getPreferences())
+    }, 100)
   }
 
   const getFontSizeClass = () => {
@@ -249,8 +256,7 @@ export default function SurahDetailPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
-                and this setting to be enabled)
+                Verse Auto Play: Automatically play next verse when current verse ends (Surah page only)
               </p>
             </CardContent>
           </Card>

@@ -21,13 +21,12 @@ export default function SettingsPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
   })
+  const [volume, setVolume] = useState(100)
 
   useEffect(() => {
     setPreferences(storage.getPreferences())
@@ -50,12 +49,10 @@ export default function SettingsPage() {
         showTranslation: true,
         showTafsir: false,
         autoPlay: false,
-        surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
         translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
-        defaultVolume: 70,
       })
       alert("All data has been cleared.")
     }
@@ -194,7 +191,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label>Verse Audio</Label>
-              <p className="text-sm text-muted-foreground">Enable individual verse audio playback buttons</p>
+              <p className="text-sm text-muted-foreground">Enable individual verse audio playback</p>
             </div>
             <Switch
               checked={preferences.verseAudioEnabled}
@@ -207,18 +204,15 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Default Volume</Label>
-              <span className="text-sm text-muted-foreground">{preferences.defaultVolume}%</span>
+              <span className="text-sm text-muted-foreground">{volume}%</span>
             </div>
             <Slider
-              value={[preferences.defaultVolume]}
-              onValueChange={(value) => updatePreference("defaultVolume", value[0])}
+              value={[volume]}
+              onValueChange={(value) => setVolume(value[0])}
               max={100}
               step={1}
               className="w-full"
             />
-            <p className="text-xs text-muted-foreground">
-              This volume will be applied when any audio starts and on page reload
-            </p>
           </div>
         </CardContent>
       </Card>

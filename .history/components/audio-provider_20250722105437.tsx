@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from "react"
+import React, { createContext, useContext, useReducer, useEffect } from "react"
 import { dataService } from "@/lib/data-service"
 import { storage } from "@/lib/storage"
 import type { Surah, Ayah } from "@/lib/types"
@@ -32,7 +32,7 @@ const initialState: AudioState = {
   isPlaying: false,
   currentTime: 0,
   duration: 0,
-  volume: 0.7,
+  volume: 1,
   isLoading: false,
   selectedReciter: 1,
 }
@@ -79,30 +79,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = React.useRef<HTMLAudioElement>(null)
   const playPromiseRef = React.useRef<Promise<void> | null>(null)
 
-  // Initialize with user's preferred settings
+  // Initialize with user's preferred reciter
   useEffect(() => {
     try {
       const preferences = storage.getPreferences()
       dispatch({ type: "SET_RECITER", payload: preferences.selectedReciter || 1 })
-
-      // Apply default volume from settings
-      const defaultVolume = preferences.defaultVolume / 100 // Convert percentage to decimal
-      dispatch({ type: "SET_VOLUME", payload: defaultVolume })
-
-      // Apply volume to audio element immediately
-      if (audioRef.current) {
-        audioRef.current.volume = defaultVolume
-      }
-
-      console.log(`Applied default volume: ${preferences.defaultVolume}% (${defaultVolume})`)
+      dispatch({ type: "SET_VOLUME", payload: 0.7 })
     } catch (error) {
       console.error("Error loading preferences:", error)
       // Use defaults if storage fails
       dispatch({ type: "SET_RECITER", payload: 1 })
       dispatch({ type: "SET_VOLUME", payload: 0.7 })
-      if (audioRef.current) {
-        audioRef.current.volume = 0.7
-      }
     }
   }, [])
 
@@ -266,70 +253,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const playNextSurah = useCallback(async (): Promise<void> => {
-    if (!state.currentSurah) {
-      console.log("No current surah to play next from")
-      return
-    }
-
-    try {
-      console.log(`Playing next surah from current: ${state.currentSurah.nameEnglish} (ID: ${state.currentSurah.id})`)
-      dispatch({ type: "SET_LOADING", payload: true })
-
-      const allSurahs = await dataService.getAllSurahs()
-      const currentIndex = allSurahs.findIndex((s) => s.id === state.currentSurah!.id)
-
-      if (currentIndex < allSurahs.length - 1) {
-        const nextSurah = allSurahs[currentIndex + 1]
-        console.log(`Next surah: ${nextSurah.name} (ID: ${nextSurah.id})`)
-        const fullNextSurah = await dataService.getSurah(nextSurah.id)
-        if (fullNextSurah) {
-          await playSurah(fullNextSurah)
-        }
-      } else {
-        // If it's the last surah, go to first surah
-        console.log("Last surah reached, going to first surah")
-        const firstSurah = await dataService.getSurah(1)
-        if (firstSurah) {
-          await playSurah(firstSurah)
-        }
-      }
-    } catch (error) {
-      console.error("Error playing next surah:", error)
-      dispatch({ type: "SET_LOADING", payload: false })
-    }
-  }, [state.currentSurah])
-
-  const playPreviousSurah = useCallback(async (): Promise<void> => {
-    if (!state.currentSurah) return
-
-    try {
-      console.log("Playing previous surah...")
-      dispatch({ type: "SET_LOADING", payload: true })
-
-      const allSurahs = await dataService.getAllSurahs()
-      const currentIndex = allSurahs.findIndex((s) => s.id === state.currentSurah!.id)
-
-      if (currentIndex > 0) {
-        const previousSurah = allSurahs[currentIndex - 1]
-        const fullPreviousSurah = await dataService.getSurah(previousSurah.id)
-        if (fullPreviousSurah) {
-          await playSurah(fullPreviousSurah)
-        }
-      } else {
-        // If it's the first surah, go to last surah
-        const lastSurah = await dataService.getSurah(114)
-        if (lastSurah) {
-          await playSurah(lastSurah)
-        }
-      }
-    } catch (error) {
-      console.error("Error playing previous surah:", error)
-      dispatch({ type: "SET_LOADING", payload: false })
-    }
-  }, [state.currentSurah])
-
-  const playSurah = useCallback(async (surah: Surah): Promise<void> => {
+  const playSurah = async (surah: Surah): Promise<void> => {
     try {
       console.log(`Starting to play surah: ${surah.nameEnglish} (ID: ${surah.id})`)
       dispatch({ type: "SET_CURRENT_SURAH", payload: surah })
@@ -369,13 +293,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audioRef.current.src = audioUrl
       audioRef.current.load()
 
-      // Apply volume from settings before playing
-      const preferences = storage.getPreferences()
-      const volume = preferences.defaultVolume / 100
-      audioRef.current.volume = volume
-      dispatch({ type: "SET_VOLUME", payload: volume })
-      console.log(`Applied volume for surah playback: ${preferences.defaultVolume}%`)
-
       // Wait for audio to be ready then play
       playPromiseRef.current = audioRef.current.play()
       await playPromiseRef.current
@@ -405,7 +322,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         console.error("Actual playback error:", error)
       }
     }
-  }, [])
+  }
 
   const changeReciter = async (reciterId: number): Promise<void> => {
     // Since we only have Mishary, this function doesn't need to do much
@@ -474,11 +391,66 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Handle audio ended - use useCallback to ensure fresh state
-  const handleEnded = useCallback(async () => {
-    console.log("🎵 Surah audio ended")
-    console.log("Current surah when ended:", state.currentSurah?.nameEnglish)
+  const playNextSurah = async (): Promise<void> => {
+    if (!state.currentSurah) return
 
+    try {
+      console.log("Playing next surah...")
+      dispatch({ type: "SET_LOADING", payload: true })
+
+      const allSurahs = await dataService.getAllSurahs()
+      const currentIndex = allSurahs.findIndex((s) => s.id === state.currentSurah!.id)
+
+      if (currentIndex < allSurahs.length - 1) {
+        const nextSurah = allSurahs[currentIndex + 1]
+        const fullNextSurah = await dataService.getSurah(nextSurah.id)
+        if (fullNextSurah) {
+          await playSurah(fullNextSurah)
+        }
+      } else {
+        // If it's the last surah, go to first surah
+        const firstSurah = await dataService.getSurah(1)
+        if (firstSurah) {
+          await playSurah(firstSurah)
+        }
+      }
+    } catch (error) {
+      console.error("Error playing next surah:", error)
+      dispatch({ type: "SET_LOADING", payload: false })
+    }
+  }
+
+  const playPreviousSurah = async (): Promise<void> => {
+    if (!state.currentSurah) return
+
+    try {
+      console.log("Playing previous surah...")
+      dispatch({ type: "SET_LOADING", payload: true })
+
+      const allSurahs = await dataService.getAllSurahs()
+      const currentIndex = allSurahs.findIndex((s) => s.id === state.currentSurah!.id)
+
+      if (currentIndex > 0) {
+        const previousSurah = allSurahs[currentIndex - 1]
+        const fullPreviousSurah = await dataService.getSurah(previousSurah.id)
+        if (fullPreviousSurah) {
+          await playSurah(fullPreviousSurah)
+        }
+      } else {
+        // If it's the first surah, go to last surah
+        const lastSurah = await dataService.getSurah(114)
+        if (lastSurah) {
+          await playSurah(lastSurah)
+        }
+      }
+    } catch (error) {
+      console.error("Error playing previous surah:", error)
+      dispatch({ type: "SET_LOADING", payload: false })
+    }
+  }
+
+  const handleEnded = async () => {
+    console.log("Surah audio ended")
     dispatch({ type: "SET_PLAYING", payload: false })
     dispatch({ type: "SET_TIME", payload: 0 })
 
@@ -486,24 +458,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       navigator.mediaSession.playbackState = "paused"
     }
 
-    // Check if global auto-play is enabled and play next surah
+    // Check if auto-play is enabled and play next surah
     try {
       const preferences = storage.getPreferences()
-      console.log("Checking autoplay preferences:", {
-        autoPlay: preferences.autoPlay,
-        currentSurah: state.currentSurah?.nameEnglish,
-      })
-
       if (preferences.autoPlay && state.currentSurah) {
-        console.log("✅ Global Auto Play enabled, playing next surah...")
+        console.log("Auto Play enabled, playing next surah...")
         await playNextSurah()
       } else {
-        console.log("❌ Global Auto Play disabled or no current surah, stopping surah playback")
+        console.log("Auto Play disabled, stopping surah playback")
       }
     } catch (error) {
       console.error("Error in surah auto-play:", error)
     }
-  }, [state.currentSurah, playNextSurah])
+  }
 
   const handleWaiting = () => {
     console.log("Audio is waiting")
@@ -592,7 +559,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener("waiting", handleWaiting)
     audio.addEventListener("canplaythrough", handleCanPlayThrough)
 
-    // Set volume from state
+    // Set volume
     audio.volume = Math.max(0, Math.min(1, state.volume))
 
     return () => {
@@ -607,7 +574,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("waiting", handleWaiting)
       audio.removeEventListener("canplaythrough", handleCanPlayThrough)
     }
-  }, [state.volume, handleEnded])
+  }, [state.volume])
 
   const contextValue: AudioContextType = {
     state,

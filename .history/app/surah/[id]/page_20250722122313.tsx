@@ -249,8 +249,7 @@ export default function SurahDetailPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
-                and this setting to be enabled)
+                Verse Auto Play: Automatically play next verse when current verse ends (Surah page only)
               </p>
             </CardContent>
           </Card>

@@ -21,13 +21,12 @@ export default function SettingsPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
   })
+  const [volume, setVolume] = useState(100)
 
   useEffect(() => {
     setPreferences(storage.getPreferences())
@@ -50,12 +49,10 @@ export default function SettingsPage() {
         showTranslation: true,
         showTafsir: false,
         autoPlay: false,
-        surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
         translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
-        defaultVolume: 70,
       })
       alert("All data has been cleared.")
     }
@@ -180,7 +177,8 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <Label>Auto Play</Label>
               <p className="text-sm text-muted-foreground">
-                Automatically play next surah when current one ends, and next verse when verse audio ends
+                Automatically continue playback: next surah when current surah ends, and next verse when individual
+                verse audio ends
               </p>
             </div>
             <Switch
@@ -207,18 +205,15 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Default Volume</Label>
-              <span className="text-sm text-muted-foreground">{preferences.defaultVolume}%</span>
+              <span className="text-sm text-muted-foreground">{volume}%</span>
             </div>
             <Slider
-              value={[preferences.defaultVolume]}
-              onValueChange={(value) => updatePreference("defaultVolume", value[0])}
+              value={[volume]}
+              onValueChange={(value) => setVolume(value[0])}
               max={100}
               step={1}
               className="w-full"
             />
-            <p className="text-xs text-muted-foreground">
-              This volume will be applied when any audio starts and on page reload
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -284,7 +279,7 @@ export default function SettingsPage() {
             <p>Version 2.0.0 - Complete Edition</p>
             <p>All 114 Surahs • Mishary Al Afasy Recitation • Tafsir Support</p>
             <p>Built with Next.js and Tailwind CSS</p>
-            <p>Audio by Mishary Rashid Al Afasy (مشاري بن راشد العفاسي)</p>
+            <p>Audio by Mishary Rashid Al Afasy (مشاري ��ن راشد العفاسي)</p>
             <p>Created by Umyma Syed</p>
           </div>
         </CardContent>

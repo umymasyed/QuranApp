@@ -8,12 +8,13 @@ import { storage } from "@/lib/storage"
 import { useVerseAudio } from "./verse-audio-provider"
 import type { Ayah } from "@/lib/types"
 
-interface VerseAudioPlayerProps {
+interface EnhancedVerseAudioPlayerProps {
   ayah: Ayah
+  totalVerses: number
   className?: string
 }
 
-export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
+export function EnhancedVerseAudioPlayer({ ayah, totalVerses, className }: EnhancedVerseAudioPlayerProps) {
   const [audioLoaded, setAudioLoaded] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -35,6 +36,26 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
   useEffect(() => {
     checkAudioAvailability()
   }, [ayah.surahId, ayah.number])
+
+  // Auto-play this verse if it's set as current playing verse
+  useEffect(() => {
+    if (currentPlayingVerse === verseKey && !isPlaying && !isLoading && audioAvailable) {
+      console.log(`🎵 Auto-starting verse ${ayah.number} playback`)
+      handleAutoPlay()
+    }
+  }, [currentPlayingVerse, verseKey])
+
+  const handleAutoPlay = async () => {
+    try {
+      setIsLoading(true)
+      await togglePlayPause()
+    } catch (error) {
+      console.error("Auto-play failed:", error)
+      setAudioError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleAudioClick = async () => {
     try {
@@ -69,46 +90,51 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
     }
 
     const handlePlay = () => {
+      console.log(`🎵 Verse ${ayah.number} started playing`)
       setIsPlaying(true)
       setShowPlayer(true)
       setCurrentPlayingVerse(verseKey)
     }
 
     const handlePause = () => {
+      console.log(`⏸️ Verse ${ayah.number} paused`)
       setIsPlaying(false)
     }
 
     const handleEnded = async () => {
-      console.log("Verse audio ended")
+      console.log(`🏁 Verse ${ayah.number} audio ended`)
 
-      // Check if auto-play is enabled for verses (only check autoPlay setting)
-      const preferences = storage.getPreferences()
-      if (preferences.autoPlay) {
+      // Check if auto-play is enabled for verses
+      const currentPreferences = storage.getPreferences()
+      if (currentPreferences.autoPlay) {
         try {
           // Find the next verse in the current surah
           const nextVerseNumber = ayah.number + 1
-          const nextVerseKey = `${ayah.surahId}_${nextVerseNumber}`
 
-          // Check if next verse exists (you might need to pass total verses as prop)
-          // For now, we'll try to play it and handle the error if it doesn't exist
-          console.log(`Auto-playing next verse: ${nextVerseKey}`)
+          if (nextVerseNumber <= totalVerses) {
+            const nextVerseKey = `${ayah.surahId}_${nextVerseNumber}`
+            console.log(`🔄 Auto-playing next verse: ${nextVerseKey}`)
 
-          // Set a small delay before playing next verse
-          setTimeout(() => {
-            setCurrentPlayingVerse(nextVerseKey)
-            // The next verse player will handle the actual playback
-          }, 1000)
+            // Set a small delay before playing next verse for smooth transition
+            setTimeout(() => {
+              setCurrentPlayingVerse(nextVerseKey)
+            }, 800)
+          } else {
+            console.log(`⏹️ Reached end of surah ${ayah.surahId}, stopping verse auto-play`)
+            handleStop()
+          }
         } catch (error) {
-          console.error("Error in verse auto-play:", error)
+          console.error("❌ Error in verse auto-play:", error)
           handleStop()
         }
       } else {
+        console.log("⏹️ Auto-play disabled, stopping verse playback")
         handleStop()
       }
     }
 
     const handleError = (e: any) => {
-      console.error("Verse audio error:", e)
+      console.error(`❌ Verse ${ayah.number} audio error:`, e)
       setIsLoading(false)
       setAudioError(true)
       setAudioAvailable(false)
@@ -160,7 +186,7 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
       audio.removeEventListener("waiting", handleWaiting)
       audio.removeEventListener("canplaythrough", handleCanPlayThrough)
     }
-  }, [verseKey, currentPlayingVerse])
+  }, [verseKey, currentPlayingVerse, ayah.number, totalVerses])
 
   const checkAudioAvailability = async () => {
     try {
@@ -295,7 +321,7 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
         >
           <Headphones className="h-3 w-3 mr-2 text-green-600" />
 
-          {audioLoading ? (
+          {audioLoading || isLoading ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin" />
               <span className="text-xs ml-1 text-green-700 dark:text-green-300">Loading...</span>

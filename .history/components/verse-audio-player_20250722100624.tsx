@@ -81,9 +81,9 @@ export function VerseAudioPlayer({ ayah, className }: VerseAudioPlayerProps) {
     const handleEnded = async () => {
       console.log("Verse audio ended")
 
-      // Check if auto-play is enabled for verses (only check autoPlay setting)
+      // Check if auto-play is enabled for verses
       const preferences = storage.getPreferences()
-      if (preferences.autoPlay) {
+      if (preferences.autoPlay && preferences.verseAudioEnabled) {
         try {
           // Find the next verse in the current surah
           const nextVerseNumber = ayah.number + 1

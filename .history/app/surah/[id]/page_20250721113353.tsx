@@ -15,7 +15,7 @@ import { useAudio } from "@/components/audio-provider"
 import { VerseAudioProvider } from "@/components/verse-audio-provider"
 import type { Surah, UserPreferences, FavoriteVerse } from "@/lib/types"
 import Link from "next/link"
-import { EnhancedVerseAudioPlayer } from "@/components/enhanced-verse-audio-player"
+import { VerseAudioPlayer } from "@/components/verse-audio-player"
 import { dataService } from "@/lib/data-service"
 
 export default function SurahDetailPage() {
@@ -31,12 +31,10 @@ export default function SurahDetailPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
   })
   const [showSettings, setShowSettings] = useState(false)
   const { state, playSurah, togglePlayPause } = useAudio()
@@ -241,17 +239,13 @@ export default function SurahDetailPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="surah-verse-autoplay"
-                    checked={preferences.surahPageVerseAutoPlay}
-                    onCheckedChange={(checked) => updatePreferences("surahPageVerseAutoPlay", checked)}
+                    id="autoplay"
+                    checked={preferences.autoPlay}
+                    onCheckedChange={(checked) => updatePreferences("autoPlay", checked)}
                   />
-                  <Label htmlFor="surah-verse-autoplay">Verse Auto Play</Label>
+                  <Label htmlFor="autoplay">Auto Play</Label>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
-                and this setting to be enabled)
-              </p>
             </CardContent>
           </Card>
         )}
@@ -324,7 +318,7 @@ export default function SurahDetailPage() {
                       <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium">{ayah.number}</span>
                       </div>
-                      <EnhancedVerseAudioPlayer ayah={ayah} totalVerses={surah.verses} />
+                      <VerseAudioPlayer ayah={ayah} />
                     </div>
                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button

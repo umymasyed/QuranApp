@@ -21,20 +21,32 @@ export default function SettingsPage() {
     showTranslation: true,
     showTafsir: false,
     autoPlay: false,
-    surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
     translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
-    defaultVolume: 70,
   })
+  const [volume, setVolume] = useState(70)
 
   useEffect(() => {
-    setPreferences(storage.getPreferences())
+    const loadedPreferences = storage.getPreferences()
+    setPreferences(loadedPreferences)
+    // Load volume from preferences (convert from 0-1 to 0-100 for slider)
+    setVolume(Math.round((loadedPreferences.defaultVolume || 0.7) * 100))
   }, [])
 
   const updatePreference = (key: keyof UserPreferences, value: any) => {
     const newPreferences = { ...preferences, [key]: value }
+    setPreferences(newPreferences)
+    storage.setPreferences(newPreferences)
+  }
+
+  const updateVolume = (value: number[]) => {
+    const newVolume = value[0]
+    setVolume(newVolume)
+    // Convert from 0-100 to 0-1 and save to preferences
+    const volumeDecimal = newVolume / 100
+    const newPreferences = { ...preferences, defaultVolume: volumeDecimal }
     setPreferences(newPreferences)
     storage.setPreferences(newPreferences)
   }
@@ -50,13 +62,12 @@ export default function SettingsPage() {
         showTranslation: true,
         showTafsir: false,
         autoPlay: false,
-        surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
         translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
-        defaultVolume: 70,
       })
+      setVolume(70)
       alert("All data has been cleared.")
     }
   }
@@ -207,17 +218,11 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Default Volume</Label>
-              <span className="text-sm text-muted-foreground">{preferences.defaultVolume}%</span>
+              <span className="text-sm text-muted-foreground">{volume}%</span>
             </div>
-            <Slider
-              value={[preferences.defaultVolume]}
-              onValueChange={(value) => updatePreference("defaultVolume", value[0])}
-              max={100}
-              step={1}
-              className="w-full"
-            />
+            <Slider value={[volume]} onValueChange={updateVolume} max={100} step={1} className="w-full" />
             <p className="text-xs text-muted-foreground">
-              This volume will be applied when any audio starts and on page reload
+              This volume will be applied to all audio when it starts playing
             </p>
           </div>
         </CardContent>

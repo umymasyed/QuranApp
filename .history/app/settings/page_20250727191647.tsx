@@ -84,16 +84,15 @@ export default function SettingsPage() {
               <Label>Theme</Label>
               <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
             </div>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="px-3 py-2 border rounded-md bg-background"
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="system">System</option>
+            </select>
           </div>
         </CardContent>
       </Card>

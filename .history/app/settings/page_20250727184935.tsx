@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import { useTheme } from "next-themes"
@@ -79,23 +78,38 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Theme</Label>
-              <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
-            </div>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
+  <div className="flex items-center justify-between">
+    <div className="space-y-1">
+      <Label>Theme</Label>
+      <p className="text-sm text-muted-foreground">
+        Choose your preferred color scheme
+      </p>
+    </div>
+    <div className="relative">
+      <select
+        value={theme}
+        onChange={(e) => setTheme(e.target.value)}
+        className="px-3 py-2 pr-8 rounded-md border border-input bg-background text-foreground text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
+      >
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">System</option>
+      </select>
+      {/* optional custom dropdown icon (Tailwind doesn't style native select arrows well) */}
+      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-muted-foreground">
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</CardContent>
+
       </Card>
 
       {/* Reading Settings */}

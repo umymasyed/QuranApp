@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import { useTheme } from "next-themes"
@@ -79,23 +78,25 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Theme</Label>
-              <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
-            </div>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
+  <div className="flex items-center justify-between">
+    <div className="space-y-1">
+      <Label className="text-base font-medium">Theme</Label>
+      <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
+    </div>
+    <div>
+      <select
+        value={theme}
+        onChange={(e) => setTheme(e.target.value)}
+        className="appearance-none bg-background border border-input text-sm px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors"
+      >
+        <option value="light" className="bg-background text-foreground">Light</option>
+        <option value="dark" className="bg-background text-foreground">Dark</option>
+        <option value="system" className="bg-background text-foreground">System</option>
+      </select>
+    </div>
+  </div>
+</CardContent>
+
       </Card>
 
       {/* Reading Settings */}

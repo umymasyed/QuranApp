@@ -24,11 +24,9 @@ export function TafsirDisplay({ ayah, className }: TafsirDisplayProps) {
 
     setIsLoading(true)
     try {
-      console.log(`Loading tafsir for ${ayah.surahId}:${ayah.number}`)
       const tafsirText = await dataService.getTafsir(ayah.surahId, ayah.number)
       setTafsir(tafsirText)
       setHasLoaded(true)
-      console.log(`Tafsir loaded:`, tafsirText ? "Success" : "No tafsir found")
     } catch (error) {
       console.error("Error loading tafsir:", error)
       setTafsir("Tafsir not available for this verse.")
@@ -47,44 +45,29 @@ export function TafsirDisplay({ ayah, className }: TafsirDisplayProps) {
     <div className={className}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-full justify-between text-left">
+          <Button variant="ghost" size="sm" className="w-full justify-between">
             <div className="flex items-center">
-              <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
-              <span className="text-blue-600 font-medium">Tafsir (Commentary)</span>
+              <BookOpen className="h-4 w-4 mr-2" />
+              <span>Tafsir (Commentary)</span>
             </div>
-            {isOpen ? (
-              <ChevronUp className="h-4 w-4 text-blue-600" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-blue-600" />
-            )}
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <Card className="mt-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+          <Card className="mt-2">
             <CardContent className="p-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-blue-600" />
-                  <span className="text-sm text-blue-600">Loading commentary...</span>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span className="text-sm text-muted-foreground">Loading commentary...</span>
                 </div>
               ) : tafsir ? (
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <BookOpen className="h-4 w-4 text-blue-600" />
-                    <h4 className="font-semibold text-sm text-blue-800 dark:text-blue-200">
-                      Tafsir Ibn Kathir - Verse {ayah.number}
-                    </h4>
-                  </div>
-                  <div className="pl-6 border-l-2 border-blue-300 dark:border-blue-700">
-                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{tafsir}</p>
-                  </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 italic">Source: Tafsir Ibn Kathir (English)</p>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-primary">Commentary for Verse {ayah.number}:</h4>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{tafsir}</p>
                 </div>
               ) : (
-                <div className="text-center py-4">
-                  <BookOpen className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 italic">No commentary available for this verse.</p>
-                </div>
+                <p className="text-sm text-muted-foreground italic">No commentary available for this verse.</p>
               )}
             </CardContent>
           </Card>

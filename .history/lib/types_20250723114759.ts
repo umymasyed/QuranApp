@@ -16,7 +16,6 @@ export interface Ayah {
   number: number
   textArabic: string
   textEnglish: string
-  textUrdu?: string
   audioUrl?: string
   verseKey?: string
   juzNumber?: number
@@ -40,18 +39,17 @@ export interface FavoriteVerse {
   verseNumber: number
   textArabic: string
   textEnglish: string
-  textUrdu?: string
 }
 
 export interface UserPreferences {
   theme: "light" | "dark"
   showTranslation: boolean
-  showUrduTranslation: boolean
   showTafsir: boolean // Add tafsir preference
   autoPlay: boolean // Global autoplay for both surah and verse
   surahPageVerseAutoPlay: boolean // Surah page specific verse autoplay
   selectedReciter: number
   selectedVerseReciter: number
+  translationLanguage: string
   verseAudioEnabled: boolean
   defaultVolume: number // Add default volume setting
 }

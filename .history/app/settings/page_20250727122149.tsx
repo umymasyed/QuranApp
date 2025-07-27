@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import { useTheme } from "next-themes"
@@ -17,7 +18,7 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: "light",
     showTranslation: true,
-    showUrduTranslation: false,
+    translationLanguage: "english",
     showTafsir: false,
     autoPlay: false,
     surahPageVerseAutoPlay: false,
@@ -45,7 +46,7 @@ export default function SettingsPage() {
       setPreferences({
         theme: "light",
         showTranslation: true,
-        showUrduTranslation: false,
+        translationLanguage: "english",
         showTafsir: false,
         autoPlay: false,
         surahPageVerseAutoPlay: false,
@@ -83,15 +84,16 @@ export default function SettingsPage() {
               <Label>Theme</Label>
               <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
             </div>
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className="px-3 py-2 border rounded-md bg-background"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </select>
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -101,14 +103,14 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Type className="h-5 w-5 mr-2" />
-            Reading & Translation
+            Reading
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Label>Show English Translation</Label>
-              <p className="text-sm text-muted-foreground">Display English translation alongside Arabic text</p>
+              <Label>Show Translation</Label>
+              <p className="text-sm text-muted-foreground">Display translation alongside Arabic text</p>
             </div>
             <Switch
               checked={preferences.showTranslation}
@@ -120,28 +122,32 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Label className="flex items-center">
-                <Languages className="h-4 w-4 mr-2" />
-                Show Urdu Translation
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Display Urdu translation below English translation (اردو ترجمہ انگریزی کے نیچے دکھائیں)
-              </p>
+              <Label>Translation Language</Label>
+              <p className="text-sm text-muted-foreground">Choose your preferred translation language</p>
             </div>
-            <Switch
-              checked={preferences.showUrduTranslation}
-              onCheckedChange={(checked) => updatePreference("showUrduTranslation", checked)}
-              disabled={!preferences.showTranslation}
-            />
+            <Select
+              value={preferences.translationLanguage}
+              onValueChange={(value) => updatePreference("translationLanguage", value)}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="english">
+                  <div className="flex items-center">
+                    <Languages className="h-4 w-4 mr-2" />
+                    English
+                  </div>
+                </SelectItem>
+                <SelectItem value="urdu">
+                  <div className="flex items-center">
+                    <Languages className="h-4 w-4 mr-2" />
+                    اردو
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
-          {!preferences.showTranslation && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Enable "Show English Translation" first to use Urdu translation
-              </p>
-            </div>
-          )}
 
           <Separator />
 
@@ -286,7 +292,7 @@ export default function SettingsPage() {
           </div>
           <Separator />
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>Version 2.1.0 - Dual Translation Edition</p>
+            <p>Version 2.0.0 - Complete Edition</p>
             <p>All 114 Surahs • Mishary Al Afasy Recitation • English & Urdu Translations • Tafsir Support</p>
             <p>Built with Next.js and Tailwind CSS</p>
             <p>Audio by Mishary Rashid Al Afasy (مشاري بن راشد العفاسي)</p>

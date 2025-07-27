@@ -490,7 +490,6 @@ export const dataService = {
           number: i + 1,
           textArabic: apiChapter.arabic1[i] || "",
           textEnglish: apiChapter.english[i] || "",
-          textUrdu: apiChapter.urdu ? apiChapter.urdu[i] || "" : "",
           verseKey: `${apiChapter.surahNo}:${i + 1}`,
           juzNumber: 1, // We don't have this info from the API
           pageNumber: 1, // We don't have this info from the API
@@ -519,7 +518,6 @@ export const dataService = {
       number: apiVerse.ayahNo,
       textArabic: apiVerse.arabic1,
       textEnglish: apiVerse.english,
-      textUrdu: apiVerse.urdu || "",
       verseKey: `${apiVerse.surahNo}:${apiVerse.ayahNo}`,
       juzNumber: 1, // We don't have this info from the API
       pageNumber: 1, // We don't have this info from the API

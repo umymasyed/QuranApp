@@ -72,13 +72,15 @@ export function TafsirDisplay({ ayah, className }: TafsirDisplayProps) {
                   <div className="flex items-center space-x-2">
                     <BookOpen className="h-4 w-4 text-blue-600" />
                     <h4 className="font-semibold text-sm text-blue-800 dark:text-blue-200">
-                      Tafsir Ibn Kathir - Verse {ayah.number}
+                      Commentary for Verse {ayah.number}
                     </h4>
                   </div>
                   <div className="pl-6 border-l-2 border-blue-300 dark:border-blue-700">
                     <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{tafsir}</p>
                   </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 italic">Source: Tafsir Ibn Kathir (English)</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 italic">
+                    Source: Tafsir al-Jalalayn & Ibn Kathir
+                  </p>
                 </div>
               ) : (
                 <div className="text-center py-4">

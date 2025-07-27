@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Play, Pause, Bookmark, BookmarkCheck, ArrowLeft, Settings, Type, Star, Heart, Languages } from "lucide-react"
+import { Play, Pause, Bookmark, BookmarkCheck, ArrowLeft, Settings, Type, Star, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { storage } from "@/lib/storage"
 import { useAudio } from "@/components/audio-provider"
 import { VerseAudioProvider } from "@/components/verse-audio-provider"
-import { TafsirDisplay } from "@/components/tafsir-display"
 import type { Surah, UserPreferences, FavoriteVerse } from "@/lib/types"
 import Link from "next/link"
 import { EnhancedVerseAudioPlayer } from "@/components/enhanced-verse-audio-player"
@@ -28,12 +27,11 @@ export default function SurahDetailPage() {
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: "light",
     showTranslation: true,
-    showUrduTranslation: false,
-    showTafsir: false,
     autoPlay: false,
     surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
+    translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
     defaultVolume: 70,
   })
@@ -117,7 +115,6 @@ export default function SurahDetailPage() {
         verseNumber: ayah.number,
         textArabic: ayah.textArabic,
         textEnglish: ayah.textEnglish,
-        textUrdu: ayah.textUrdu,
       }
       storage.addFavoriteVerse(favoriteVerse)
       setFavoriteVerses([...favoriteVerses, ayahId])
@@ -210,34 +207,14 @@ export default function SurahDetailPage() {
                 <Type className="h-4 w-4 mr-2" />
                 Reading Settings
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="translation"
                     checked={preferences.showTranslation}
                     onCheckedChange={(checked) => updatePreferences("showTranslation", checked)}
                   />
-                  <Label htmlFor="translation">English Translation</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="urdu-translation"
-                    checked={preferences.showUrduTranslation}
-                    onCheckedChange={(checked) => updatePreferences("showUrduTranslation", checked)}
-                    disabled={!preferences.showTranslation}
-                  />
-                  <Label htmlFor="urdu-translation" className="flex items-center">
-                    <Languages className="h-3 w-3 mr-1" />
-                    اردو ترجمہ
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="tafsir"
-                    checked={preferences.showTafsir}
-                    onCheckedChange={(checked) => updatePreferences("showTafsir", checked)}
-                  />
-                  <Label htmlFor="tafsir">Show Tafsir</Label>
+                  <Label htmlFor="translation">Show Translation</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -248,13 +225,10 @@ export default function SurahDetailPage() {
                   <Label htmlFor="surah-verse-autoplay">Verse Auto Play</Label>
                 </div>
               </div>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>
-                  • Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto
-                  Play and this setting to be enabled)
-                </p>
-                <p>• Urdu Translation: Shows below English translation when both are enabled</p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Verse Auto Play: Automatically play next verse when current verse ends (requires both Global Auto Play
+                and this setting to be enabled)
+              </p>
             </CardContent>
           </Card>
         )}
@@ -289,21 +263,6 @@ export default function SurahDetailPage() {
                 <span>{surah.verses} verses</span>
                 <span>•</span>
                 <span>{surah.revelation} period</span>
-                {preferences.showTranslation && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center">
-                      English
-                      {preferences.showUrduTranslation && (
-                        <>
-                          <span className="mx-1">&</span>
-                          <Languages className="h-3 w-3 mx-1" />
-                          اردو
-                        </>
-                      )}
-                    </span>
-                  </>
-                )}
               </div>
             </div>
 
@@ -370,61 +329,11 @@ export default function SurahDetailPage() {
                   {/* Arabic Text */}
                   <div className={`arabic-text ${getFontSizeClass()} leading-relaxed`}>{ayah.textArabic}</div>
 
-                  {/* Translations */}
+                  {/* Translation */}
                   {preferences.showTranslation && (
                     <>
                       <Separator />
-                      <div className="space-y-3">
-                        {/* English Translation */}
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-xs text-blue-600 font-medium">English Translation</span>
-                          </div>
-                          <p className="text-muted-foreground leading-relaxed pl-4">
-                            {ayah.textEnglish || "Translation not available"}
-                          </p>
-                        </div>
-
-                        {/* Urdu Translation */}
-                        {preferences.showUrduTranslation && ayah.textUrdu && (
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600 font-medium flex items-center">
-                                <Languages className="h-3 w-3 mr-1" />
-                                اردو ترجمہ
-                              </span>
-                            </div>
-                            <p className="text-muted-foreground leading-relaxed pl-4 urdu-text text-right">
-                              {ayah.textUrdu}
-                            </p>
-                          </div>
-                        )}
-
-                        {preferences.showUrduTranslation && !ayah.textUrdu && (
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                              <span className="text-xs text-gray-500 font-medium flex items-center">
-                                <Languages className="h-3 w-3 mr-1" />
-                                اردو ترجمہ
-                              </span>
-                            </div>
-                            <p className="text-gray-400 leading-relaxed pl-4 text-sm italic">
-                              Urdu translation not available for this verse
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Tafsir */}
-                  {preferences.showTafsir && (
-                    <>
-                      <Separator />
-                      <TafsirDisplay ayah={ayah} />
+                      <p className="text-muted-foreground leading-relaxed">{ayah.textEnglish}</p>
                     </>
                   )}
 

@@ -490,7 +490,6 @@ export const dataService = {
           number: i + 1,
           textArabic: apiChapter.arabic1[i] || "",
           textEnglish: apiChapter.english[i] || "",
-          textUrdu: apiChapter.urdu ? apiChapter.urdu[i] || "" : "",
           verseKey: `${apiChapter.surahNo}:${i + 1}`,
           juzNumber: 1, // We don't have this info from the API
           pageNumber: 1, // We don't have this info from the API
@@ -519,7 +518,6 @@ export const dataService = {
       number: apiVerse.ayahNo,
       textArabic: apiVerse.arabic1,
       textEnglish: apiVerse.english,
-      textUrdu: apiVerse.urdu || "",
       verseKey: `${apiVerse.surahNo}:${apiVerse.ayahNo}`,
       juzNumber: 1, // We don't have this info from the API
       pageNumber: 1, // We don't have this info from the API
@@ -625,62 +623,14 @@ export const dataService = {
     }
   },
 
-  // Get Tafsir for a specific verse using your dedicated API
+  // Get Tafsir for a specific verse
   async getTafsir(surahId: number, ayahId: number): Promise<string | null> {
     try {
-      console.log(`Getting Tafsir Ibn Kathir for ${surahId}:${ayahId}`)
-
-      // Validate input
-      if (surahId < 1 || surahId > 114 || ayahId < 1) {
-        console.error(`Invalid verse reference: ${surahId}:${ayahId}`)
-        return null
-      }
-
-      // Use your dedicated API for Tafsir
-      const tafsirData = await quranApi.getTafsir(surahId, ayahId)
-
-      if (tafsirData && tafsirData.tafsirs && tafsirData.tafsirs.length > 0) {
-        // Look for Ibn Kathir specifically
-        const ibnKathirTafsir = tafsirData.tafsirs.find(
-          (tafsir) => tafsir.author && tafsir.author.toLowerCase().includes("ibn kathir"),
-        )
-
-        if (ibnKathirTafsir && ibnKathirTafsir.content) {
-          // Clean up the text if needed
-          const cleanText = ibnKathirTafsir.content
-            .replace(/<[^>]*>/g, "") // Remove HTML tags if any
-            .replace(/&nbsp;/g, " ") // Replace &nbsp; with spaces
-            .replace(/&amp;/g, "&") // Replace &amp; with &
-            .replace(/&lt;/g, "<") // Replace &lt; with <
-            .replace(/&gt;/g, ">") // Replace &gt; with >
-            .replace(/&quot;/g, '"') // Replace &quot; with "
-            .trim()
-
-          console.log(`Tafsir Ibn Kathir loaded for ${surahId}:${ayahId}`)
-          return cleanText || null
-        }
-
-        // If Ibn Kathir not found, use the first available tafsir
-        const firstTafsir = tafsirData.tafsirs[0]
-        if (firstTafsir && firstTafsir.content) {
-          const cleanText = firstTafsir.content
-            .replace(/<[^>]*>/g, "")
-            .replace(/&nbsp;/g, " ")
-            .replace(/&amp;/g, "&")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">")
-            .replace(/&quot;/g, '"')
-            .trim()
-
-          console.log(`Tafsir loaded for ${surahId}:${ayahId} (Author: ${firstTafsir.author})`)
-          return cleanText || null
-        }
-      }
-
-      console.log(`No Tafsir found for ${surahId}:${ayahId}`)
-      return null
+      // This would be implemented based on your tafsir API
+      console.log(`Getting tafsir for ${surahId}:${ayahId}`)
+      return null // Placeholder
     } catch (error) {
-      console.error(`Error getting Tafsir for ${surahId}:${ayahId}:`, error)
+      console.error(`Error getting tafsir for ${surahId}:${ayahId}:`, error)
       return null
     }
   },

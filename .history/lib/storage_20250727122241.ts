@@ -84,7 +84,7 @@ export const storage = {
       return {
         theme: "light",
         showTranslation: true,
-        showUrduTranslation: false,
+        translationLanguage: "english",
         showTafsir: false,
         autoPlay: false,
         surahPageVerseAutoPlay: false,
@@ -98,7 +98,7 @@ export const storage = {
         JSON.stringify({
           theme: "light",
           showTranslation: true,
-          showUrduTranslation: false,
+          translationLanguage: "english",
           showTafsir: false,
           autoPlay: false,
           surahPageVerseAutoPlay: false,

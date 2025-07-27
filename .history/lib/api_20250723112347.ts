@@ -149,7 +149,7 @@ export const quranApi = {
   async getTafsir(surahNo: number, ayahNo: number): Promise<ApiTafsir | null> {
     try {
       console.log(`Fetching tafsir for verse ${surahNo}:${ayahNo} from API...`)
-      const response = await fetch(`${API_BASE_URL}/tafsir/${surahNo}_${ayahNo}.json`)
+      const response = await fetch(`${API_BASE_URL}/tafsir/${surahNo}/${ayahNo}.json`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

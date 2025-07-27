@@ -84,12 +84,11 @@ export const storage = {
       return {
         theme: "light",
         showTranslation: true,
-        showUrduTranslation: false,
-        showTafsir: false,
         autoPlay: false,
         surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
+        translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
         defaultVolume: 70,
       }
@@ -98,12 +97,11 @@ export const storage = {
         JSON.stringify({
           theme: "light",
           showTranslation: true,
-          showUrduTranslation: false,
-          showTafsir: false,
           autoPlay: false,
           surahPageVerseAutoPlay: false,
           selectedReciter: 1,
           selectedVerseReciter: 1,
+          translationLanguage: "english_saheeh",
           verseAudioEnabled: true,
           defaultVolume: 70,
         }),

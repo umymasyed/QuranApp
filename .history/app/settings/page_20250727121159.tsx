@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Settings, Sun, Type, Volume2, Trash2, Download, BookOpen, Languages } from "lucide-react"
+import { Settings, Sun, Type, Volume2, Trash2, Download, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import { useTheme } from "next-themes"
@@ -17,12 +18,11 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: "light",
     showTranslation: true,
-    showUrduTranslation: false,
-    showTafsir: false,
     autoPlay: false,
     surahPageVerseAutoPlay: false,
     selectedReciter: 1,
     selectedVerseReciter: 1,
+    translationLanguage: "english_saheeh",
     verseAudioEnabled: true,
     defaultVolume: 70,
   })
@@ -45,12 +45,11 @@ export default function SettingsPage() {
       setPreferences({
         theme: "light",
         showTranslation: true,
-        showUrduTranslation: false,
-        showTafsir: false,
         autoPlay: false,
         surahPageVerseAutoPlay: false,
         selectedReciter: 1,
         selectedVerseReciter: 1,
+        translationLanguage: "english_saheeh",
         verseAudioEnabled: true,
         defaultVolume: 70,
       })
@@ -83,15 +82,16 @@ export default function SettingsPage() {
               <Label>Theme</Label>
               <p className="text-sm text-muted-foreground">Choose your preferred color scheme</p>
             </div>
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className="px-3 py-2 border rounded-md bg-background"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </select>
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -101,58 +101,18 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Type className="h-5 w-5 mr-2" />
-            Reading & Translation
+            Reading
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Label>Show English Translation</Label>
+              <Label>Show Translation</Label>
               <p className="text-sm text-muted-foreground">Display English translation alongside Arabic text</p>
             </div>
             <Switch
               checked={preferences.showTranslation}
               onCheckedChange={(checked) => updatePreference("showTranslation", checked)}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="flex items-center">
-                <Languages className="h-4 w-4 mr-2" />
-                Show Urdu Translation
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Display Urdu translation below English translation (اردو ترجمہ انگریزی کے نیچے دکھائیں)
-              </p>
-            </div>
-            <Switch
-              checked={preferences.showUrduTranslation}
-              onCheckedChange={(checked) => updatePreference("showUrduTranslation", checked)}
-              disabled={!preferences.showTranslation}
-            />
-          </div>
-
-          {!preferences.showTranslation && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Enable "Show English Translation" first to use Urdu translation
-              </p>
-            </div>
-          )}
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Show Tafsir</Label>
-              <p className="text-sm text-muted-foreground">Display commentary and explanation for each verse</p>
-            </div>
-            <Switch
-              checked={preferences.showTafsir}
-              onCheckedChange={(checked) => updatePreference("showTafsir", checked)}
             />
           </div>
         </CardContent>
@@ -281,13 +241,13 @@ export default function SettingsPage() {
             <h3 className="font-semibold">Complete Quran App</h3>
             <p className="text-sm text-muted-foreground">
               A comprehensive Quran reading and listening experience with all 114 chapters, beautiful recitation by
-              Mishary Rashid Al Afasy, translations in English and Urdu, and Tafsir.
+              Mishary Rashid Al Afasy, and translations.
             </p>
           </div>
           <Separator />
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>Version 2.1.0 - Dual Translation Edition</p>
-            <p>All 114 Surahs • Mishary Al Afasy Recitation • English & Urdu Translations • Tafsir Support</p>
+            <p>Version 2.0.0 - Complete Edition</p>
+            <p>All 114 Surahs • Mishary Al Afasy Recitation</p>
             <p>Built with Next.js and Tailwind CSS</p>
             <p>Audio by Mishary Rashid Al Afasy (مشاري بن راشد العفاسي)</p>
             <p>Created by Umyma Syed</p>

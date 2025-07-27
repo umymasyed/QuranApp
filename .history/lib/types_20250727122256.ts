@@ -46,7 +46,7 @@ export interface FavoriteVerse {
 export interface UserPreferences {
   theme: "light" | "dark"
   showTranslation: boolean
-  showUrduTranslation: boolean
+  translationLanguage: "english" | "urdu"
   showTafsir: boolean // Add tafsir preference
   autoPlay: boolean // Global autoplay for both surah and verse
   surahPageVerseAutoPlay: boolean // Surah page specific verse autoplay
